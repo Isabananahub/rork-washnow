@@ -18,7 +18,8 @@ export const appRouter = createTRPCRouter({
     updateStatus: updateJobStatusRoute,
   }),
   google: createTRPCRouter({
-    testApi: testGoogleApiRoute,
+    testApi: testGoogleApiRoute.testGoogleApi,
+    findLaundryBusinesses: testGoogleApiRoute.findLaundryBusinesses,
     placesProxy: googlePlacesRoutes.placesProxy,
     placeDetailsProxy: googlePlacesRoutes.placeDetailsProxy,
   }),

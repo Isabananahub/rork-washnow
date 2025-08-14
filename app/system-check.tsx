@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Stack } from 'expo-router';
-import { Play, CheckCircle, Settings, Database } from 'lucide-react-native';
+import { Play, CheckCircle, Settings, Database, Search, Building, MapPin, RefreshCw } from 'lucide-react-native';
 import GoogleSystemCheck from '@/components/GoogleSystemCheck';
 import { runFullSystemTest, mockTestOrders } from '@/lib/test-suite';
+import { trpc } from '@/lib/trpc';
 import Colors from '@/constants/colors';
 
 export default function SystemCheckScreen() {
   const [isRunningFullTest, setIsRunningFullTest] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [testType, setTestType] = useState<'places' | 'geocoding' | 'directions' | 'laundry-search'>('places');
+  
+  // Test Google API
+  const googleApiTest = trpc.google.testApi.useQuery(
+    { testType },
+    { enabled: false }
+  );
+  
+  // Test laundry business search
+  const laundryBusinessTest = trpc.google.findLaundryBusinesses.useQuery(
+    {},
+    { enabled: false }
+  );
 
   const handleRunFullSystemTest = async () => {
     setIsRunningFullTest(true);
@@ -23,6 +38,29 @@ export default function SystemCheckScreen() {
       );
     } finally {
       setIsRunningFullTest(false);
+    }
+  };
+  
+  const runGoogleTest = async (type: 'places' | 'geocoding' | 'directions' | 'laundry-search') => {
+    try {
+      setIsRefreshing(true);
+      setTestType(type);
+      await googleApiTest.refetch();
+    } catch (error) {
+      Alert.alert('Test Failed', 'Failed to run Google API test');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+  
+  const runLaundrySearch = async () => {
+    try {
+      setIsRefreshing(true);
+      await laundryBusinessTest.refetch();
+    } catch (error) {
+      Alert.alert('Search Failed', 'Failed to search for laundry businesses');
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -103,7 +141,153 @@ export default function SystemCheckScreen() {
         <Text style={styles.sectionDescription}>
           Test Google Places API, Geocoding API, and backend proxy functionality.
         </Text>
+        
+        <View style={styles.testButtonsRow}>
+          <TouchableOpacity 
+            style={[styles.smallTestButton, { opacity: isRefreshing ? 0.5 : 1 }]}
+            onPress={() => runGoogleTest('places')}
+            disabled={isRefreshing}
+          >
+            <Search size={14} color="#FFFFFF" />
+            <Text style={styles.smallButtonText}>Places</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.smallTestButton, { opacity: isRefreshing ? 0.5 : 1 }]}
+            onPress={() => runGoogleTest('geocoding')}
+            disabled={isRefreshing}
+          >
+            <MapPin size={14} color="#FFFFFF" />
+            <Text style={styles.smallButtonText}>Geocoding</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.smallTestButton, { opacity: isRefreshing ? 0.5 : 1 }]}
+            onPress={() => runGoogleTest('directions')}
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={14} color="#FFFFFF" />
+            <Text style={styles.smallButtonText}>Directions</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.smallTestButton, { backgroundColor: '#10B981', opacity: isRefreshing ? 0.5 : 1 }]}
+            onPress={() => runGoogleTest('laundry-search')}
+            disabled={isRefreshing}
+          >
+            <Building size={14} color="#FFFFFF" />
+            <Text style={styles.smallButtonText}>Laundry</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {googleApiTest.data && (
+          <View style={styles.testResults}>
+            <Text style={[styles.resultText, { 
+              color: googleApiTest.data.success ? '#10B981' : '#EF4444' 
+            }]}>
+              {googleApiTest.data.success ? '✅ ' : '❌ '}
+              {googleApiTest.data.message || googleApiTest.data.error}
+            </Text>
+            
+            {googleApiTest.data.success && (
+              <View style={styles.resultDetails}>
+                <Text style={styles.detailText}>Status: {googleApiTest.data.status}</Text>
+                <Text style={styles.detailText}>Results: {googleApiTest.data.resultsCount}</Text>
+                <Text style={styles.detailText}>HTTP: {googleApiTest.data.httpStatus}</Text>
+                
+                {googleApiTest.data.businessDetails && (
+                  <View style={styles.businessList}>
+                    <Text style={styles.businessHeader}>🏪 Found Businesses:</Text>
+                    {googleApiTest.data.businessDetails.slice(0, 3).map((business: any, index: number) => (
+                      <View key={index} style={styles.businessItem}>
+                        <Text style={styles.businessName}>{business.name}</Text>
+                        <Text style={styles.businessAddress}>{business.address}</Text>
+                        {business.rating && (
+                          <Text style={styles.businessRating}>⭐ {business.rating}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+        
         <GoogleSystemCheck />
+      </View>
+      
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>🏪 San Diego Laundry Search</Text>
+        <Text style={styles.sectionDescription}>
+          Comprehensive search for laundry businesses in San Diego, CA 92123 area using multiple Google APIs.
+        </Text>
+        
+        <TouchableOpacity 
+          style={[styles.testButton, styles.primaryButton, { opacity: isRefreshing ? 0.5 : 1 }]}
+          onPress={runLaundrySearch}
+          disabled={isRefreshing}
+        >
+          <Building size={20} color="white" />
+          <Text style={styles.testButtonText}>
+            {isRefreshing ? 'Searching...' : 'Search Laundry Businesses'}
+          </Text>
+        </TouchableOpacity>
+        
+        {laundryBusinessTest.data && (
+          <View style={styles.testResults}>
+            <Text style={[styles.resultText, { 
+              color: laundryBusinessTest.data.success ? '#10B981' : '#EF4444' 
+            }]}>
+              {laundryBusinessTest.data.success ? '✅ ' : '❌ '}
+              {laundryBusinessTest.data.success 
+                ? `Found ${laundryBusinessTest.data.totalFound} laundry businesses in San Diego 92123`
+                : laundryBusinessTest.data.error
+              }
+            </Text>
+            
+            {laundryBusinessTest.data.success && laundryBusinessTest.data.businesses && (
+              <View style={styles.resultDetails}>
+                <Text style={styles.detailText}>Total Found: {laundryBusinessTest.data.totalFound}</Text>
+                {laundryBusinessTest.data.searchStats && (
+                  <Text style={styles.detailText}>
+                    Success Rate: {laundryBusinessTest.data.searchStats.successfulRequests}/{laundryBusinessTest.data.searchStats.totalRequests}
+                  </Text>
+                )}
+                
+                <View style={styles.businessList}>
+                  <Text style={styles.businessHeader}>🏪 Top Laundry Businesses:</Text>
+                  {laundryBusinessTest.data.businesses.slice(0, 5).map((business: any, index: number) => (
+                    <View key={business.place_id} style={styles.businessItem}>
+                      <Text style={styles.businessName}>{business.name}</Text>
+                      <Text style={styles.businessAddress}>{business.address}</Text>
+                      <View style={styles.businessMeta}>
+                        {business.rating && (
+                          <Text style={styles.businessRating}>⭐ {business.rating}</Text>
+                        )}
+                        {business.user_ratings_total && (
+                          <Text style={styles.businessReviews}>({business.user_ratings_total} reviews)</Text>
+                        )}
+                        {business.business_status && (
+                          <Text style={[styles.businessStatus, { 
+                            color: business.business_status === 'OPERATIONAL' ? '#10B981' : '#EF4444' 
+                          }]}>
+                            {business.business_status}
+                          </Text>
+                        )}
+                      </View>
+                      {business.types && (
+                        <Text style={styles.businessTypes}>
+                          {business.types.slice(0, 3).join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       <View style={styles.featuresSection}>
@@ -252,5 +436,98 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     flex: 1,
+  },
+  testButtonsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  smallTestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  smallButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+    marginLeft: 4,
+    fontSize: 12,
+  },
+  testResults: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  resultText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  resultDetails: {
+    backgroundColor: '#ffffff',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  businessList: {
+    marginTop: 12,
+  },
+  businessHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  businessItem: {
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  businessName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  businessAddress: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  businessMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  businessRating: {
+    fontSize: 14,
+    color: '#FFA500',
+    fontWeight: '500',
+  },
+  businessReviews: {
+    fontSize: 12,
+    color: '#666',
+  },
+  businessStatus: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  businessTypes: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
   },
 });
