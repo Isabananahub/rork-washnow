@@ -1,6 +1,7 @@
 import { publicProcedure } from '../../../create-context';
 import { z } from 'zod';
 
+// Updated API key from value section as requested
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw';
 
 // San Diego, CA 92123 coordinates
@@ -13,7 +14,7 @@ export const testGoogleApiProcedure = publicProcedure
   .input(z.object({
     testType: z.enum(['places', 'geocoding', 'directions', 'laundry-search']).optional().default('places')
   }))
-  .query(async ({ input }: { input: { testType?: 'places' | 'geocoding' | 'directions' | 'laundry-search' } }) => {
+  .query(async ({ input }) => {
     const { testType } = input;
     
     try {
@@ -121,7 +122,7 @@ export const findLaundryBusinessesProcedure = publicProcedure
     radius: z.number().optional().default(5000),
     keyword: z.string().optional().default('laundry')
   }))
-  .query(async ({ input }: { input: { location?: { latitude: number; longitude: number }; radius?: number; keyword?: string } }) => {
+  .query(async ({ input }) => {
     const { location = SAN_DIEGO_92123_COORDS, radius = 5000 } = input;
     
     try {

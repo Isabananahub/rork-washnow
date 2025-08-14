@@ -176,6 +176,86 @@ export default function GoogleSystemCheck() {
     }
 
     setChecks([...results]);
+
+    // Test 5: Laundry Business Search (San Diego 92123)
+    results.push({
+      name: 'Laundry Business Search (San Diego 92123)',
+      status: 'loading',
+      message: 'Searching for laundry businesses in San Diego...'
+    });
+    setChecks([...results]);
+
+    try {
+      const laundryTest = await trpcClient.google.testApi.query({ testType: 'laundry-search' });
+      
+      if (laundryTest.success && laundryTest.businessDetails) {
+        results[4] = {
+          name: 'Laundry Business Search (San Diego 92123)',
+          status: 'success',
+          message: `✅ Found ${laundryTest.resultsCount} laundry businesses in San Diego 92123`,
+          details: {
+            ...laundryTest,
+            businessSample: laundryTest.businessDetails.slice(0, 3) // Show first 3 businesses
+          }
+        };
+      } else {
+        results[4] = {
+          name: 'Laundry Business Search (San Diego 92123)',
+          status: 'warning',
+          message: `⚠️ No laundry businesses found in San Diego 92123`,
+          details: laundryTest
+        };
+      }
+    } catch (error) {
+      results[4] = {
+        name: 'Laundry Business Search (San Diego 92123)',
+        status: 'error',
+        message: `❌ Laundry search failed: ${error}`,
+        details: error
+      };
+    }
+
+    setChecks([...results]);
+
+    // Test 6: Comprehensive Laundry Business Finder
+    results.push({
+      name: 'Comprehensive Laundry Business Finder',
+      status: 'loading',
+      message: 'Running comprehensive laundry business search...'
+    });
+    setChecks([...results]);
+
+    try {
+      const comprehensiveTest = await trpcClient.google.findLaundryBusinesses.query({});
+      
+      if (comprehensiveTest.success) {
+        results[5] = {
+          name: 'Comprehensive Laundry Business Finder',
+          status: 'success',
+          message: `✅ Found ${comprehensiveTest.totalFound} total businesses (${comprehensiveTest.searchStats?.successfulRequests || 0}/${comprehensiveTest.searchStats?.totalRequests || 0} searches successful)`,
+          details: {
+            ...comprehensiveTest,
+            businessSample: comprehensiveTest.businesses.slice(0, 5) // Show first 5 businesses
+          }
+        };
+      } else {
+        results[5] = {
+          name: 'Comprehensive Laundry Business Finder',
+          status: 'error',
+          message: `❌ Comprehensive search failed: ${comprehensiveTest.error}`,
+          details: comprehensiveTest
+        };
+      }
+    } catch (error) {
+      results[5] = {
+        name: 'Comprehensive Laundry Business Finder',
+        status: 'error',
+        message: `❌ Comprehensive search failed: ${error}`,
+        details: error
+      };
+    }
+
+    setChecks([...results]);
     setIsRunning(false);
   };
 

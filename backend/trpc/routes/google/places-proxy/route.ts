@@ -1,6 +1,7 @@
 import { publicProcedure } from '../../../create-context';
 import { z } from 'zod';
 
+// Updated API key from value section as requested
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw';
 
 export const placesProxyProcedure = publicProcedure
@@ -12,7 +13,7 @@ export const placesProxyProcedure = publicProcedure
     }).optional(),
     radius: z.number().optional().default(50000)
   }))
-  .query(async ({ input: queryParams }: { input: { input: string; location?: { latitude: number; longitude: number }; radius?: number } }) => {
+  .query(async ({ input: queryParams }) => {
     try {
       console.log('🔍 Places proxy request for:', queryParams.input);
       
@@ -76,7 +77,7 @@ export const placeDetailsProxyProcedure = publicProcedure
   .input(z.object({
     placeId: z.string()
   }))
-  .query(async ({ input: queryParams }: { input: { placeId: string } }) => {
+  .query(async ({ input: queryParams }) => {
     try {
       console.log('📍 Place details proxy request for:', queryParams.placeId);
       
