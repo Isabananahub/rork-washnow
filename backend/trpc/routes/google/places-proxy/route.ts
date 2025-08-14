@@ -1,8 +1,41 @@
 import { publicProcedure } from '../../../create-context';
 import { z } from 'zod';
 
-// Updated API key from value section as requested
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw';
+// Try multiple API keys to find a working one
+const API_KEYS = [
+  'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw', // First key from user
+  'AIzaSyC8UogRcMe-arNdWPaLZNdWlzWcH_n_2HM', // Second key to try
+];
+
+// Function to test API key validity
+const testApiKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    const testUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=test&key=${apiKey}`;
+    const response = await fetch(testUrl);
+    const data = await response.json();
+    return data.status === 'OK' || data.status === 'ZERO_RESULTS';
+  } catch {
+    return false;
+  }
+};
+
+// Find the first working API key
+let GOOGLE_MAPS_API_KEY = API_KEYS[0]; // Default to first key
+
+// Test keys on initialization (async)
+(async () => {
+  for (const key of API_KEYS) {
+    console.log('🔑 Proxy testing API key:', key.substring(0, 10) + '...');
+    const isValid = await testApiKey(key);
+    if (isValid) {
+      GOOGLE_MAPS_API_KEY = key;
+      console.log('✅ Proxy found working API key:', key.substring(0, 10) + '...');
+      break;
+    } else {
+      console.log('❌ Proxy API key failed:', key.substring(0, 10) + '...');
+    }
+  }
+})();
 
 export const placesProxyProcedure = publicProcedure
   .input(z.object({
@@ -13,7 +46,7 @@ export const placesProxyProcedure = publicProcedure
     }).optional(),
     radius: z.number().optional().default(50000)
   }))
-  .query(async ({ input: queryParams }) => {
+  .query(async ({ input: queryParams }: { input: { input: string; location?: { latitude: number; longitude: number }; radius?: number } }) => {
     try {
       console.log('🔍 Places proxy request for:', queryParams.input);
       
@@ -77,7 +110,7 @@ export const placeDetailsProxyProcedure = publicProcedure
   .input(z.object({
     placeId: z.string()
   }))
-  .query(async ({ input: queryParams }) => {
+  .query(async ({ input: queryParams }: { input: { placeId: string } }) => {
     try {
       console.log('📍 Place details proxy request for:', queryParams.placeId);
       

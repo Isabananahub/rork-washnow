@@ -1,8 +1,41 @@
 import { publicProcedure } from '../../../create-context';
 import { z } from 'zod';
 
-// Updated API key from value section as requested
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw';
+// Try multiple API keys to find a working one
+const API_KEYS = [
+  'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw', // First key from user
+  'AIzaSyC8UogRcMe-arNdWPaLZNdWlzWcH_n_2HM', // Second key to try
+];
+
+// Function to test API key validity
+const testApiKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    const testUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=test&key=${apiKey}`;
+    const response = await fetch(testUrl);
+    const data = await response.json();
+    return data.status === 'OK' || data.status === 'ZERO_RESULTS';
+  } catch {
+    return false;
+  }
+};
+
+// Find the first working API key
+let GOOGLE_MAPS_API_KEY = API_KEYS[0]; // Default to first key
+
+// Test keys on initialization (async)
+(async () => {
+  for (const key of API_KEYS) {
+    console.log('🔑 Backend testing API key:', key.substring(0, 10) + '...');
+    const isValid = await testApiKey(key);
+    if (isValid) {
+      GOOGLE_MAPS_API_KEY = key;
+      console.log('✅ Backend found working API key:', key.substring(0, 10) + '...');
+      break;
+    } else {
+      console.log('❌ Backend API key failed:', key.substring(0, 10) + '...');
+    }
+  }
+})();
 
 // San Diego, CA 92123 coordinates
 const SAN_DIEGO_92123_COORDS = {
@@ -14,7 +47,7 @@ export const testGoogleApiProcedure = publicProcedure
   .input(z.object({
     testType: z.enum(['places', 'geocoding', 'directions', 'laundry-search']).optional().default('places')
   }))
-  .query(async ({ input }) => {
+  .query(async ({ input }: { input: { testType?: 'places' | 'geocoding' | 'directions' | 'laundry-search' } }) => {
     const { testType } = input;
     
     try {
@@ -122,7 +155,7 @@ export const findLaundryBusinessesProcedure = publicProcedure
     radius: z.number().optional().default(5000),
     keyword: z.string().optional().default('laundry')
   }))
-  .query(async ({ input }) => {
+  .query(async ({ input }: { input: { location?: { latitude: number; longitude: number }; radius?: number; keyword?: string } }) => {
     const { location = SAN_DIEGO_92123_COORDS, radius = 5000 } = input;
     
     try {

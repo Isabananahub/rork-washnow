@@ -3,16 +3,54 @@ import { LocationData } from './location-service';
 import { trpcClient } from './trpc';
 
 // Google API Configuration
-// Updated API key from value section as requested
-// Using the new Google Places API key provided by user
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw';
+// Try multiple API keys to find a working one
+const API_KEYS = [
+  'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw', // First key from user
+  'AIzaSyC8UogRcMe-arNdWPaLZNdWlzWcH_n_2HM', // Second key to try
+];
 
-// Validate API key format
-if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY.length > 30 && GOOGLE_MAPS_API_KEY.startsWith('AIza')) {
-  console.log('✅ Google Maps API Key format validation: PASSED');
-} else {
-  console.warn('⚠️ Google Maps API Key format validation: FAILED');
-}
+// Function to test API key validity
+const testApiKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    const testUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=test&key=${apiKey}`;
+    const response = await fetch(testUrl);
+    const data = await response.json();
+    return data.status === 'OK' || data.status === 'ZERO_RESULTS';
+  } catch {
+    return false;
+  }
+};
+
+// Find the first working API key
+let GOOGLE_MAPS_API_KEY = API_KEYS[0]; // Default to first key
+
+// Test keys on initialization (async)
+(async () => {
+  for (const key of API_KEYS) {
+    console.log('🔑 Testing API key:', key.substring(0, 10) + '...');
+    const isValid = await testApiKey(key);
+    if (isValid) {
+      GOOGLE_MAPS_API_KEY = key;
+      console.log('✅ Found working API key:', key.substring(0, 10) + '...');
+      break;
+    } else {
+      console.log('❌ API key failed:', key.substring(0, 10) + '...');
+    }
+  }
+})();
+
+// Enhanced API key validation
+const validateApiKeyFormat = (key: string): boolean => {
+  return !!(key && key.length > 30 && key.startsWith('AIza'));
+};
+
+API_KEYS.forEach((key, index) => {
+  if (validateApiKeyFormat(key)) {
+    console.log(`✅ API Key ${index + 1} format validation: PASSED`);
+  } else {
+    console.warn(`⚠️ API Key ${index + 1} format validation: FAILED`);
+  }
+});
 
 // Alternative way to get API key from app.json extra config
 const getApiKeyFromConfig = () => {
