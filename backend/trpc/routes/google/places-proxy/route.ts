@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 // Try multiple API keys to find a working one
 const API_KEYS = [
+  'AIzaSyCSjzEynDXnUDCFSV-RrIiNxwTUzEwSaRA', // New key from user
   'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw', // First key from user
   'AIzaSyC8UogRcMe-arNdWPaLZNdWlzWcH_n_2HM', // Second key to try
 ];
@@ -46,7 +47,7 @@ export const placesProxyProcedure = publicProcedure
     }).optional(),
     radius: z.number().optional().default(50000)
   }))
-  .query(async ({ input: queryParams }: { input: { input: string; location?: { latitude: number; longitude: number }; radius?: number } }) => {
+  .query(async ({ input: queryParams }) => {
     try {
       console.log('🔍 Places proxy request for:', queryParams.input);
       
@@ -110,7 +111,7 @@ export const placeDetailsProxyProcedure = publicProcedure
   .input(z.object({
     placeId: z.string()
   }))
-  .query(async ({ input: queryParams }: { input: { placeId: string } }) => {
+  .query(async ({ input: queryParams }) => {
     try {
       console.log('📍 Place details proxy request for:', queryParams.placeId);
       

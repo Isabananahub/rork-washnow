@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 // Try multiple API keys to find a working one
 const API_KEYS = [
+  'AIzaSyCSjzEynDXnUDCFSV-RrIiNxwTUzEwSaRA', // New key from user
   'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw', // First key from user
   'AIzaSyC8UogRcMe-arNdWPaLZNdWlzWcH_n_2HM', // Second key to try
 ];
@@ -47,7 +48,7 @@ export const testGoogleApiProcedure = publicProcedure
   .input(z.object({
     testType: z.enum(['places', 'geocoding', 'directions', 'laundry-search']).optional().default('places')
   }))
-  .query(async ({ input }: { input: { testType?: 'places' | 'geocoding' | 'directions' | 'laundry-search' } }) => {
+  .query(async ({ input }) => {
     const { testType } = input;
     
     try {
@@ -155,7 +156,7 @@ export const findLaundryBusinessesProcedure = publicProcedure
     radius: z.number().optional().default(5000),
     keyword: z.string().optional().default('laundry')
   }))
-  .query(async ({ input }: { input: { location?: { latitude: number; longitude: number }; radius?: number; keyword?: string } }) => {
+  .query(async ({ input }) => {
     const { location = SAN_DIEGO_92123_COORDS, radius = 5000 } = input;
     
     try {

@@ -5,6 +5,7 @@ import { trpcClient } from './trpc';
 // Google API Configuration
 // Try multiple API keys to find a working one
 const API_KEYS = [
+  'AIzaSyCSjzEynDXnUDCFSV-RrIiNxwTUzEwSaRA', // New key from user
   'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw', // First key from user
   'AIzaSyC8UogRcMe-arNdWPaLZNdWlzWcH_n_2HM', // Second key to try
 ];
