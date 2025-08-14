@@ -1,4 +1,4 @@
-import { publicProcedure } from '../../create-context';
+import { publicProcedure } from '../../../create-context';
 import { z } from 'zod';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBvOkBwgGlbUiuS-oSiuvGpZVtEHXTBTBw';
@@ -13,7 +13,7 @@ export const testGoogleApiProcedure = publicProcedure
   .input(z.object({
     testType: z.enum(['places', 'geocoding', 'directions', 'laundry-search']).optional().default('places')
   }))
-  .query(async ({ input }) => {
+  .query(async ({ input }: { input: { testType?: 'places' | 'geocoding' | 'directions' | 'laundry-search' } }) => {
     const { testType } = input;
     
     try {
@@ -121,8 +121,8 @@ export const findLaundryBusinessesProcedure = publicProcedure
     radius: z.number().optional().default(5000),
     keyword: z.string().optional().default('laundry')
   }))
-  .query(async ({ input }) => {
-    const { location, radius, keyword } = input;
+  .query(async ({ input }: { input: { location?: { latitude: number; longitude: number }; radius?: number; keyword?: string } }) => {
+    const { location = SAN_DIEGO_92123_COORDS, radius = 5000 } = input;
     
     try {
       console.log('🔍 Searching for laundry businesses near:', location);
@@ -138,13 +138,13 @@ export const findLaundryBusinessesProcedure = publicProcedure
       // Multiple search strategies for comprehensive results
       const searchQueries = [
         // Nearby search with type
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.latitude},${location.longitude}&radius=${radius}&type=laundry&key=${GOOGLE_MAPS_API_KEY}`,
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location!.latitude},${location!.longitude}&radius=${radius}&type=laundry&key=${GOOGLE_MAPS_API_KEY}`,
         // Text search for laundromats
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=laundromat+near+${location.latitude},${location.longitude}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`,
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=laundromat+near+${location!.latitude},${location!.longitude}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`,
         // Text search for dry cleaners
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=dry+cleaning+near+${location.latitude},${location.longitude}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`,
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=dry+cleaning+near+${location!.latitude},${location!.longitude}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`,
         // Text search for wash and fold
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=wash+and+fold+near+${location.latitude},${location.longitude}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=wash+and+fold+near+${location!.latitude},${location!.longitude}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`
       ];
 
       const allBusinesses = new Map();
