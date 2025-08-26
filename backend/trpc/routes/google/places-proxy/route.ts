@@ -47,7 +47,7 @@ export const placesProxyProcedure = publicProcedure
     }).optional(),
     radius: z.number().optional().default(50000)
   }))
-  .query(async ({ input: queryParams }) => {
+  .query(async ({ input: queryParams }: { input: { input: string; location?: { latitude: number; longitude: number }; radius?: number } }) => {
     try {
       console.log('🔍 Places proxy request for:', queryParams.input);
       
@@ -111,7 +111,7 @@ export const placeDetailsProxyProcedure = publicProcedure
   .input(z.object({
     placeId: z.string()
   }))
-  .query(async ({ input: queryParams }) => {
+  .query(async ({ input: queryParams }: { input: { placeId: string } }) => {
     try {
       console.log('📍 Place details proxy request for:', queryParams.placeId);
       

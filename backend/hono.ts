@@ -8,7 +8,20 @@ import { createContext } from "./trpc/create-context";
 const app = new Hono();
 
 // Enable CORS for all routes
-app.use("*", cors());
+app.use("*", cors({
+  origin: '*',
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+}));
+
+// Add request logging middleware
+app.use("*", async (c, next) => {
+  console.log(`🔄 ${c.req.method} ${c.req.url}`);
+  console.log('📋 Headers:', Object.fromEntries(c.req.header()));
+  await next();
+  console.log(`✅ Response status: ${c.res.status}`);
+});
 
 // Mount tRPC router at /trpc
 app.use(
