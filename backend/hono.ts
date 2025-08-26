@@ -18,7 +18,7 @@ app.use("*", cors({
 // Add request logging middleware
 app.use("*", async (c, next) => {
   console.log(`🔄 ${c.req.method} ${c.req.url}`);
-  console.log('📋 Headers:', Object.fromEntries(c.req.header()));
+  console.log('📋 Headers:', c.req.header());
   await next();
   console.log(`✅ Response status: ${c.res.status}`);
 });
